@@ -1,0 +1,50 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// הגדרת תפקידי המשתמש במערכת
+enum Role {
+  USER
+  MANAGER
+  ADMIN
+}
+
+// Table Main Users
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  role         Role           @default(USER)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // (One-to-Many)
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+// Table Refresh Tokens
+model RefreshToken {
+  id         String   @id @default(uuid())
+  tokenHash  String   @unique
+  familyId   String   @default(uuid())
+  userId     String
+  userAgent  String?  // סוג הדפדפן/מכשיר
+  ipAddress  String?  // כתובת ה-IP
+  isRevoked  Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  // (Create Foreign Key) שמחבר למשתמש
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}

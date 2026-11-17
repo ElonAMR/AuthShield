@@ -34,27 +34,3 @@ export const loginSchema = z.object({
         .string({ required_error: 'Password is required' })
         .min(1, 'Password cannot be empty'),
 });
-
-/**
- * Generic validation middleware that evaluates the request body against a Zod schema
- */
-export const validate = (schema) => (req, res, next) => {
-    const result = schema.safeParse(req.body);
-
-    if (!result.success) {
-        const errors = result.error.errors.map((err) => ({
-            field: err.path.join('.'),
-            message: err.message,
-        }));
-
-        return res.status(400).json({
-            status: 'fail',
-            message: 'Validation failed',
-            errors,
-        });
-    }
-
-    // Replace request body with parsed and sanitized data
-    req.body = result.data;
-    next();
-};
